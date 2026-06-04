@@ -195,6 +195,44 @@ def extract_battery_features(df: pd.DataFrame) -> pd.DataFrame:
         
     return pd.DataFrame(feature_list)
 
+
+def test_cell(df: pd.DataFrame, cell: int = 1, cycle: int = 0, plot: bool = True):
+    print(f'possible cycles to test: {df.loc[(df["cell_id"]==cell)]["cycle"].unique()}')
+
+    test_df = df.loc[(df["cell_id"]==cell) & (df["cycle"]==cycle)].copy()
+    test_df["time_s"] = test_df["time_s"] - test_df["time_s"].iloc[0]
+    test_df["time_h"] = test_df["time_s"] / 3600
+    test_df["current_mA"] = test_df["current_A"] * 1000
+
+
+    if plot:
+
+        ax = test_df.plot(
+            x = "time_h",
+            y = "voltage_V",
+            color="orange",
+            label = "voltage",
+            figsize = (10, 5)
+
+        )
+
+        test_df.plot(
+            x = "time_h",
+            y = "current_mA",
+            secondary_y = True,
+            color = "blue",
+            label = "current", 
+            ax = ax
+        )
+
+        ax.set_xlabel("Time [h]")
+        ax.set_ylabel("Voltage [V]")
+        ax.right_ax.set_ylabel("Current [mA]")
+
+        ax.set_title(f'Voltage and Current profile for cell: {cell}, cycle: {cycle}')
+
+
+    return test_df
 def filtered_features(df_features: pd.DataFrame, df_cycle: pd.DataFrame) -> pd.DataFrame:
    # 1. Standardize df_cycle to have cell_id as index for easy mapping
     if 'cell_id' in df_cycle.columns:
