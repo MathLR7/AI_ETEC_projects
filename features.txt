@@ -22,6 +22,9 @@ Voltagem Máxima: O pico absoluto de tensão da bateria durante a formação
 .
 Voltagem Mínima: O menor nível de tensão alcançado (útil para analisar descargas profundas)
 .
+
+
+
 Classe B: Análise Diferencial (Differential Analysis)
 Esta classe foca em calcular as taxas de variação (derivadas) das curvas ao longo do tempo. No Python, você pode aproximar isso calculando a diferença entre as linhas (df['coluna'].diff()) e usar bibliotecas como scipy.signal para encontrar os picos
 .
@@ -41,6 +44,10 @@ Altura do Pico dV/dQ: O pico da variação de tensão em relação à capacidade
 .
 Localização do Pico dV/dQ: A voltagem correspondente ao pico de dV/dQ
 .
+
+
+
+
 Classe C: Características Eletroquímicas (Electrochemical)
 Estas features tentam capturar os fenômenos físicos e químicos que acontecem dentro da célula, como o crescimento da camada de proteção (SEI) e a resistência interna
 ,
