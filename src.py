@@ -34,6 +34,7 @@ import pandas as pd
 import numpy as np
 
 def extract_battery_features(df: pd.DataFrame) -> pd.DataFrame:
+    
     """
     Extracts Classes A, B, and C features from raw formation/early-cycle battery data.
     
@@ -62,11 +63,10 @@ def extract_battery_features(df: pd.DataFrame) -> pd.DataFrame:
         
         # --- CLASSE A: Statistical and Time Features (Raw Data) ---
         
-        # 1. Total time accumulated above 3.9 V (using a time delta calculation per row)
-        # If 'step_time_s' is cumulative time, we use diff(). If it's the duration of the step, use it directly.
-        # Assuming we need to calculate the time difference between consecutive logged points:
-        group['time_delta_s'] = group['step_time_s'].diff().fillna(0)
-        # Alternative if step_time_s resets every step but rows are continuous: 
+        # 1. Total time accumulated above 3.9 V
+        # Garantimos que o delta de tempo não seja negativo caso o step_time resete
+        group['time_delta_s'] = group.groupby('cycle')['step_time_s'].diff().fillna(0)
+        
         # For security, we'll assume we can approximate row duration via time delta or step duration.
         
         features['time_above_3_9V_total'] = group.loc[group['voltage_V'] > 3.9, 'time_delta_s'].sum()
@@ -75,7 +75,7 @@ def extract_battery_features(df: pd.DataFrame) -> pd.DataFrame:
         cycle_1 = group[group['cycle'] == 1]
         
         if not cycle_1.empty:
-            cycle_1_time_delta = cycle_1['step_time_s'].diff().fillna(0)
+            cycle_1_time_delta = cycle_1.loc[:, 'step_time_s'].diff().fillna(0)
             features['time_above_3_5V_cycle1'] = cycle_1_time_delta[cycle_1['voltage_V'] > 3.5].sum()
             features['max_Q_charge_cycle1'] = cycle_1['Q_charge_Ah'].max()
             features['max_E_charge_cycle1'] = cycle_1['E_charge_Wh'].max()
@@ -167,7 +167,10 @@ def extract_battery_features(df: pd.DataFrame) -> pd.DataFrame:
         
         if not relaxation_starts.empty:
             # Take the first occurrence (end of first charge)
-            start_idx = relaxation_starts.index[0]
+            # Usamos iloc[0] para pegar o primeiro evento de relaxação
+            event = relaxation_starts.iloc[0]
+            start_idx = group.index.get_loc(relaxation_starts.index[0])
+            
             v_at_cutoff = group.loc[start_idx - 1, 'voltage_V'] # Voltage right before cutoff
             
             # Look ahead in time for 1s, 10s, 60s
