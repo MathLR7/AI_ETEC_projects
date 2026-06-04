@@ -1,0 +1,9 @@
+1- separar por cell id garantindo proprocao igual boas e ruins no treino e teste.
+
+2- reducao de dimensionalidade das features com pca
+
+3- treinar com knn, artigo usou k=5
+
+4- evaluation e ver accuracy, confusion matrix, k fold cross validation
+
+5- responder perguntas fisicas ditas na proposta do projeto
