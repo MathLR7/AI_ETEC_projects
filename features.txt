@@ -1,0 +1,57 @@
+Classe A: Features Estatísticas e de Tempo (Raw Data)
+O artigo destaca que o tempo que a bateria passa em certas janelas de tensão é um forte indicador da sua vida útil
+. Usando as colunas voltage_V e step_time_s, você pode calcular:
+Tempo > 3.9 V (Total): O tempo total acumulado em que a bateria permaneceu com voltagem acima de 3.9 V durante todo o processo de formação. (O artigo ressalta que essa foi uma das features de maior correlação com a vida útil da bateria!)
+,
+.
+Tempo > 3.5 V (Ciclo 1): O tempo gasto acima de 3.5 V especificamente durante o primeiro ciclo de carga/descarga
+.
+Tempo entre 3.9 V e 4.0 V: Tempo acumulado especificamente nesta janela de tensão durante a formação
+.
+Carga Máxima Acumulada (Ah): O valor máximo atingido na coluna Q_charge_Ah durante o primeiro ciclo
+.
+Energia Máxima Acumulada (Wh): O valor máximo de E_charge_Wh fornecido à bateria no primeiro ciclo
+.
+Média da Tensão: A voltagem (voltage_V) média da bateria durante as fases ativas de carga
+.
+Variância da Tensão: A variância da voltagem, que ajuda a indicar a estabilidade do sinal
+.
+Média da Corrente: A corrente (current_A) média recebida pela bateria
+.
+Voltagem Máxima: O pico absoluto de tensão da bateria durante a formação
+.
+Voltagem Mínima: O menor nível de tensão alcançado (útil para analisar descargas profundas)
+.
+Classe B: Análise Diferencial (Differential Analysis)
+Esta classe foca em calcular as taxas de variação (derivadas) das curvas ao longo do tempo. No Python, você pode aproximar isso calculando a diferença entre as linhas (df['coluna'].diff()) e usar bibliotecas como scipy.signal para encontrar os picos
+.
+Altura do Pico dQ/dV: O valor máximo da taxa de variação da carga em relação à tensão (Capacidade Incremental)
+,
+.
+Localização do Pico dQ/dV: O valor exato da voltagem (V) no momento em que o pico dQ/dV ocorre
+,
+.
+Altura do Pico dE/dV: O valor máximo da variação da energia em relação à tensão
+,
+.
+Localização do Pico dE/dV: A voltagem correspondente onde ocorre o pico máximo de dE/dV
+,
+.
+Altura do Pico dV/dQ: O pico da variação de tensão em relação à capacidade (Análise de Voltagem Diferencial)
+.
+Localização do Pico dV/dQ: A voltagem correspondente ao pico de dV/dQ
+.
+Classe C: Características Eletroquímicas (Electrochemical)
+Estas features tentam capturar os fenômenos físicos e químicos que acontecem dentro da célula, como o crescimento da camada de proteção (SEI) e a resistência interna
+,
+.
+Lítio Consumido (Perda de Lítio): Esta feature está associada ao crescimento da camada SEI (que consome lítio). Você pode calculá-la medindo a diferença (assimetria) entre a capacidade total injetada na primeira carga (Q_charge_Ah) e a capacidade total devolvida na primeira descarga (Q_discharge_Ah)
+,
+,
+.
+Queda de Tensão (Relaxamento de 1s): O valor da voltagem exatamente 1 segundo após o corte da corrente (fim da fase de carga na formação). Isso reflete a resistência ôhmica pura
+.
+Queda de Tensão (Relaxamento de 10s): O valor da voltagem 10 segundos após o corte da corrente, refletindo processos de transferência de carga
+.
+Queda de Tensão (Relaxamento de 60s): O valor da voltagem 60 segundos após o corte, que captura os efeitos de difusão de curto prazo
+.
