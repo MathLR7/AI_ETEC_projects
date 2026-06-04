@@ -27,7 +27,7 @@ def get_quantile(df: pd.DataFrame) -> pd.DataFrame:
     top_45 = df[df["Cycle of Life"] >= top_cutoff].copy()
     top_45["label"] = "good"
 
-    labeled_df = pd.concat([top_45, bottom_45]).sort_values("Cycle of Life")
+    labeled_df = pd.concat([top_45, bottom_45]).sort_values("cell_id")
     return labeled_df
 
 import pandas as pd
@@ -195,3 +195,25 @@ def extract_battery_features(df: pd.DataFrame) -> pd.DataFrame:
         
     return pd.DataFrame(feature_list)
 
+def filtered_features(df_features: pd.DataFrame, df_cycle: pd.DataFrame) -> pd.DataFrame:
+   # 1. Standardize df_cycle to have cell_id as index for easy mapping
+    if 'cell_id' in df_cycle.columns:
+        cycle_mapped = df_cycle.set_index('cell_id')
+    else:
+        cycle_mapped = df_cycle
+
+    # 2. Extract valid cell IDs from the cycle data
+    cycle_ids = cycle_mapped.index.unique()
+        
+    # 3. Filter df_features rows to keep only matching cell IDs
+    if 'cell_id' in df_features.columns:
+        filtered = df_features[df_features['cell_id'].isin(cycle_ids)].copy()
+        # Add the label column using map
+        filtered['label'] = filtered['cell_id'].map(cycle_mapped['label'])
+    else:
+        # Fallback if cell_id is the index of df_features
+        filtered = df_features[df_features.index.isin(cycle_ids)].copy()
+        # Add the label column using map on the index
+        filtered['label'] = filtered.index.map(cycle_mapped['label'])
+
+    return filtered
