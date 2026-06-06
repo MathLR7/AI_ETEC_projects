@@ -1,0 +1,9 @@
+,actual_label,predicted_label,correct_prediction
+35,good,good,True
+20,good,good,True
+9,bad,bad,True
+12,bad,bad,True
+17,bad,bad,True
+26,good,good,True
+8,bad,bad,True
+32,good,good,True

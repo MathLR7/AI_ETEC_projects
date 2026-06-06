@@ -1,4 +1,13 @@
 import pandas as pd
+import matplotlib.pyplot as plt
+import sklearn
+
+from sklearn.linear_model import LogisticRegression
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
+
+from sklearn.metrics import accuracy_score, classification_report
+
 
 def get_data(file1 = "Dataset.xlsx", file2="CycleOfLife.xlsx"): 
 
@@ -258,6 +267,8 @@ def filtered_features(df_features: pd.DataFrame, df_cycle: pd.DataFrame) -> pd.D
     return filtered
 
 from sklearn.model_selection import train_test_split
+
+
 def separeData(df: pd.DataFrame, target_column: str = 'label', test_size: float = 0.2, random_state: int = 42):
     columns_to_drop = [target_column]
     if 'cell_id' in df.columns:
@@ -271,3 +282,161 @@ def separeData(df: pd.DataFrame, target_column: str = 'label', test_size: float 
         stratify=y
     )
     return X_train, X_test, y_train, y_test
+
+
+def create_pca(filtered_features, random_seed:int = 42):
+
+    """
+    From an already filtered features df, lower dimension using PCA and returns 
+    the new x and y arrays for the model training and validation
+    """
+
+    X_train, X_test, y_train, y_test = separeData(filtered_features, random_state=42)
+
+    scaler = sklearn.preprocessing.StandardScaler()
+
+    X_train_scaled = scaler.fit_transform(X_train)
+
+    pca = sklearn.decomposition.PCA(n_components=0.95)
+    X_train_pca_array = pca.fit_transform(X_train_scaled)
+
+    pca_columns = [f"PC{i+1}" for i in range(X_train_pca_array.shape[1])]
+
+    X_train_pca = pd.DataFrame(
+        X_train_pca_array,
+        columns=pca_columns,
+        index=X_train.index
+    )
+
+    X_test_scaled = scaler.transform(X_test)
+    X_test_pca_array = pca.transform(X_test_scaled)
+
+    X_test_pca = pd.DataFrame(
+        X_test_pca_array,
+        columns=pca_columns,
+        index=X_test.index
+    )
+
+    explained_variance = pca.explained_variance_ratio_
+
+    plt.figure(figsize=(8, 5))
+    plt.plot(
+        np.arange(1, len(explained_variance) + 1),
+        np.cumsum(explained_variance),
+        marker="o"
+    )
+
+    plt.xlabel("Number of Principal Components")
+    plt.ylabel("Cumulative Explained Variance")
+    plt.title("PCA Explained Variance")
+    plt.grid(True)
+    plt.show()
+
+    return X_train_pca, X_test_pca, y_train, y_test
+
+
+
+def supervised_learning(X_train_pca, X_test_pca, y_train, y_test, plot=True):
+
+    models = {
+        
+    # "Logistic Regression": LogisticRegression(max_iter=1000),
+     "KNN": KNeighborsClassifier(n_neighbors=5),
+    # "SVM Linear": SVC(kernel="linear"),
+    # "SVM RBF": SVC(kernel="rbf")
+
+    }
+
+    all_results = {}
+
+    for name, model in models.items():
+        model.fit(X_train_pca, y_train)
+        y_pred = model.predict(X_test_pca)
+
+        results = pd.DataFrame({
+            "actual_label": y_test,
+            "predicted_label": y_pred
+        }, index=X_test_pca.index)
+
+        results["correct_prediction"] = (
+            results["actual_label"].astype(str) == results["predicted_label"].astype(str)
+        )
+
+        all_results[name] = results
+
+        print(name)
+        print("Accuracy:", accuracy_score(y_test, y_pred))
+        print(classification_report(y_test, y_pred))
+        print("-" * 50)
+
+
+    if plot:
+        # Convert labels to arrays/series with matching indexes
+        y_test_pred = pd.Series(y_pred, index=X_test_pca.index, name="predicted_label")
+        y_test_true = pd.Series(y_test, index=X_test_pca.index, name="true_label")
+
+        labels = np.unique(np.concatenate([y_train.astype(str), y_test_true.astype(str), y_test_pred.astype(str)]))
+
+        colors = {
+            labels[0]: "#CC0000",
+            labels[1]: "#0000CC"
+        }
+
+        plt.figure(figsize=(8, 6))
+
+        feature1 = 'PC1'
+        feature2 = 'PC2'
+
+        # Plot training data using true labels
+        for label in labels:
+            train_mask = y_train.astype(str) == label
+
+            plt.scatter(
+                X_train_pca.loc[train_mask, feature1],
+                X_train_pca.loc[train_mask, feature2],
+                color=colors[label],
+                edgecolor="black",
+                s=70,
+                alpha=0.65,
+                label=f"Train true: {label}"
+            )
+
+        # Plot test data using predicted labels
+        for label in labels:
+            pred_mask = y_test_pred.astype(str) == label
+
+            plt.scatter(
+                X_test_pca.loc[pred_mask, feature1],
+                X_test_pca.loc[pred_mask, feature2],
+                color=colors[label],
+                marker="X",
+                edgecolor="black",
+                s=130,
+                label=f"Test predicted: {label}"
+            )
+
+        # Highlight wrong predictions
+        wrong_mask = y_test_true.astype(str) != y_test_pred.astype(str)
+
+        plt.scatter(
+            X_test_pca.loc[wrong_mask, feature1],
+            X_test_pca.loc[wrong_mask, feature2],
+            facecolors="none",
+            edgecolors="gold",
+            linewidths=2.5,
+            s=220,
+            label="Incorrect prediction"
+        )
+
+        plt.xlabel(f"feature {feature1}")
+        plt.ylabel(f"feature {feature2}")
+        plt.title("KNN Predictions on PCA Features")
+        plt.legend()
+        plt.grid(True, alpha=0.3)
+
+        plt.savefig("knn_predictions_pca.png", dpi=300, bbox_inches="tight")
+        plt.show()
+        
+    return all_results
+
+
