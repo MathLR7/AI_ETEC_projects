@@ -4,8 +4,8 @@ def get_data(file1 = "Dataset.xlsx", file2="CycleOfLife.xlsx"):
 
     """ returns entire dataset raw data and cycle of life data """
 
-    Dataset = pd.read_excel("Dataset.xlsx")
-    CycleOfLife = pd.read_excel("CycleOfLife.xlsx")
+    Dataset = pd.read_excel(file1)
+    CycleOfLife = pd.read_excel(file2)
 
     return Dataset, CycleOfLife 
 
@@ -233,6 +233,7 @@ def test_cell(df: pd.DataFrame, cell: int = 1, cycle: int = 0, plot: bool = True
 
 
     return test_df
+
 def filtered_features(df_features: pd.DataFrame, df_cycle: pd.DataFrame) -> pd.DataFrame:
    # 1. Standardize df_cycle to have cell_id as index for easy mapping
     if 'cell_id' in df_cycle.columns:
@@ -255,3 +256,18 @@ def filtered_features(df_features: pd.DataFrame, df_cycle: pd.DataFrame) -> pd.D
         filtered['label'] = filtered.index.map(cycle_mapped['label'])
 
     return filtered
+
+from sklearn.model_selection import train_test_split
+def separeData(df: pd.DataFrame, target_column: str = 'label', test_size: float = 0.2, random_state: int = 42):
+    columns_to_drop = [target_column]
+    if 'cell_id' in df.columns:
+        columns_to_drop.append('cell_id')
+    X = df.drop(columns=columns_to_drop)
+    y = df[target_column]
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, 
+        test_size=test_size, 
+        random_state=random_state, 
+        stratify=y
+    )
+    return X_train, X_test, y_train, y_test
