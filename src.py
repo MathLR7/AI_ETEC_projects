@@ -6,7 +6,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 
-from sklearn.metrics import accuracy_score, classification_report
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, ConfusionMatrixDisplay
+from sklearn.model_selection import cross_val_score
 
 
 def get_data(file1 = "Dataset.xlsx", file2="CycleOfLife.xlsx"): 
@@ -352,6 +353,7 @@ def supervised_learning(X_train_pca, X_test_pca, y_train, y_test, n_neighbors=5,
     for name, model in models.items():
         model.fit(X_train_pca, y_train)
         y_pred = model.predict(X_test_pca)
+        y_train_pred = model.predict(X_train_pca) # see the accuracy during training phase
 
         results = pd.DataFrame({
             "actual_label": y_test,
@@ -364,8 +366,13 @@ def supervised_learning(X_train_pca, X_test_pca, y_train, y_test, n_neighbors=5,
 
         all_results[name] = results
 
+        scores = cross_val_score(model, X_train_pca, y_train, cv=5)
+
         print(name)
-        print("Accuracy:", accuracy_score(y_test, y_pred))
+
+        print(f"Cross-Validation Accuracy: {scores.mean():.2f} (+/- {scores.std() * 2:.4f})")
+        print(f"Train accuracy: {100* accuracy_score(y_train, y_train_pred):.2f}%")
+        print(f"Test accuracy: {100* accuracy_score(y_test, y_pred):.2f}%")
         print(classification_report(y_test, y_pred))
         print("-" * 50)
 
@@ -383,6 +390,14 @@ def supervised_learning(X_train_pca, X_test_pca, y_train, y_test, n_neighbors=5,
         }
 
         plt.figure(figsize=(8, 6))
+
+        cm = confusion_matrix(y_test, y_pred, labels=model.classes_)
+        
+        # 2. Display the Confusion Matrix
+        disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=model.classes_)
+        disp.plot(cmap=plt.cm.Blues)
+        plt.title(f"Confusion Matrix")
+        plt.show()
 
         # Plot training data using true labels
         for label in labels:
