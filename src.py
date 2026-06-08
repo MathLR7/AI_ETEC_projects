@@ -276,9 +276,9 @@ def separeData(df: pd.DataFrame, target_column: str = 'label', test_size: float 
     X = df.drop(columns=columns_to_drop)
     y = df[target_column]
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, 
-        test_size=test_size, 
-        random_state=random_state, 
+        X, y,
+        test_size=test_size,
+        random_state=random_state,
         stratify=y
     )
     return X_train, X_test, y_train, y_test
@@ -291,7 +291,7 @@ def create_pca(filtered_features, random_seed:int = 42):
     the new x and y arrays for the model training and validation
     """
 
-    X_train, X_test, y_train, y_test = separeData(filtered_features, random_state=42)
+    X_train, X_test, y_train, y_test = separeData(filtered_features, random_state=random_seed)
 
     scaler = sklearn.preprocessing.StandardScaler()
 
@@ -336,12 +336,12 @@ def create_pca(filtered_features, random_seed:int = 42):
 
 
 
-def supervised_learning(X_train_pca, X_test_pca, y_train, y_test, plot=True):
+def supervised_learning(X_train_pca, X_test_pca, y_train, y_test, n_neighbors=5, plot=True, feature1='PC1', feature2='PC2'):
 
     models = {
         
     # "Logistic Regression": LogisticRegression(max_iter=1000),
-     "KNN": KNeighborsClassifier(n_neighbors=5),
+     "KNN": KNeighborsClassifier(n_neighbors),
     # "SVM Linear": SVC(kernel="linear"),
     # "SVM RBF": SVC(kernel="rbf")
 
@@ -383,9 +383,6 @@ def supervised_learning(X_train_pca, X_test_pca, y_train, y_test, plot=True):
         }
 
         plt.figure(figsize=(8, 6))
-
-        feature1 = 'PC1'
-        feature2 = 'PC2'
 
         # Plot training data using true labels
         for label in labels:
